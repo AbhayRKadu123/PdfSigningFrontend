@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+import { Document, Page } from "react-pdf";
 import Draggable from "react-draggable";
 import SignatureCanvas from "react-signature-canvas";
 import axios from "axios";
@@ -7,11 +7,8 @@ import "./styles/PdfContainer.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// --- 1. Set PDF.js worker for production
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
 export default function PdfComp() {
-  const [pdfFile, setPdfFile] = useState(null); // this will now be a URL
+  const [pdfFile, setPdfFile] = useState(null);
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [viewerWidth] = useState(680);
@@ -24,10 +21,25 @@ export default function PdfComp() {
   const sigRef = useRef(null);
 
   useEffect(() => {
+    // measure canvas on resize
     const onResize = () => measureCanvas();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  function onFileChange(e) {
+    const f = e.target.files?.[0];
+    if (f) {
+      setPdfFile(f);
+      // reset saved position when new pdf selected (optional)
+      // localStorage.removeItem("sigBoxPos");
+    }
+  }
+
+  function onDocumentLoadSuccess({ numPages }) {
+    setNumPages(numPages);
+    setTimeout(() => measureCanvas(), 250);
+  }
 
   function measureCanvas() {
     if (!containerRef.current) return;
@@ -37,35 +49,7 @@ export default function PdfComp() {
     setCanvasH(canvas.offsetHeight);
   }
 
-  // --- 2. Handle file change by uploading to backend first
-  async function onFileChange(e) {
-    const f = e.target.files?.[0];
-    if (!f) return;
-
-    try {
-      const fd = new FormData();
-      fd.append("pdf", f);
-
-      // --- Upload PDF to your backend to get a public URL
-      const res = await axios.post("https://pdfsigningbackend.onrender.com/upload", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      const pdfUrl = res.data.url; // backend should return { url: "https://..." }
-      setPdfFile(pdfUrl);
-      localStorage.removeItem("sigBoxPos"); // reset saved position on new PDF
-      toast.success("PDF uploaded");
-    } catch (err) {
-      console.error(err);
-      toast.error("PDF upload failed");
-    }
-  }
-
-  function onDocumentLoadSuccess({ numPages }) {
-    setNumPages(numPages);
-    setTimeout(() => measureCanvas(), 250);
-  }
-
+  // restore saved pos (based on signature canvas top-left)
   useEffect(() => {
     const raw = localStorage.getItem("sigBoxPos");
     if (!raw) return;
@@ -75,11 +59,13 @@ export default function PdfComp() {
       if (!canvas) return;
       const x = (saved.xPercent / 100) * canvas.offsetWidth;
       const y = (saved.yPercent / 100) * canvas.offsetHeight;
+      // adjust so outer box places correctly (handle + border)
       const ADJUST_X = 2;
       const ADJUST_Y = 14;
       setBoxPos({ x: Math.max(0, x - ADJUST_X), y: Math.max(0, y - ADJUST_Y) });
     }, 300);
   }, [pdfFile]);
+  
 
   const handleDrag = (e, data) => setBoxPos({ x: data.x, y: data.y });
 
@@ -112,7 +98,7 @@ export default function PdfComp() {
       const sigCanvasEl = sigRef.current.getCanvas();
 
       const fd = new FormData();
-      fd.append("pdfUrl", pdfFile); // send URL instead of File
+      fd.append("pdf", pdfFile);
       fd.append("signature", sigRef.current.toDataURL());
       fd.append("x", saved.xPercent ?? 0);
       fd.append("y", saved.yPercent ?? 0);
@@ -122,9 +108,9 @@ export default function PdfComp() {
       fd.append("sigWidth", sigCanvasEl.width);
       fd.append("sigHeight", sigCanvasEl.height);
 
-      const res = await axios.post("https://pdfsigningbackend.onrender.com/sign", fd, {
+      const res = await axios.post("https://pdfsigningbackend.onrender.com/sign-pdf", fd, {
         headers: { "Content-Type": "multipart/form-data" },
-        responseType: "blob",
+        responseType: "blob"
       });
 
       const blob = new Blob([res.data], { type: "application/pdf" });
