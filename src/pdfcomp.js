@@ -6,10 +6,13 @@ import axios from "axios";
 import "./styles/PdfContainer.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+// import { pdfjs } from "react-pdf";
+// import pdfWorker from "pdfjs-dist/build/pdf.worker.min.js";
+// pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 // MUST be after all imports
-pdfjs.GlobalWorkerOptions.workerSrc =
-  `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// pdfjs.GlobalWorkerOptions.workerSrc =
+//   `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 
 export default function PdfComp() {
