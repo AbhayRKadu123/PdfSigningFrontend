@@ -108,7 +108,7 @@ export default function PdfComp() {
       fd.append("sigWidth", sigCanvasEl.width);
       fd.append("sigHeight", sigCanvasEl.height);
 
-      const res = await axios.post("http://localhost:8080/sign-pdf", fd, {
+      const res = await axios.post("https://pdfsigningbackend.onrender.com", fd, {
         headers: { "Content-Type": "multipart/form-data" },
         responseType: "blob"
       });
