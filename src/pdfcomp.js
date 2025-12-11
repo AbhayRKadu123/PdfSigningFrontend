@@ -1,11 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Document, Page } from "react-pdf";
+import { Document, Page, pdfjs } from "react-pdf";
 import Draggable from "react-draggable";
 import SignatureCanvas from "react-signature-canvas";
 import axios from "axios";
 import "./styles/PdfContainer.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+// MUST be after all imports
+pdfjs.GlobalWorkerOptions.workerSrc =
+  `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
 
 export default function PdfComp() {
   const [pdfFile, setPdfFile] = useState(null);
