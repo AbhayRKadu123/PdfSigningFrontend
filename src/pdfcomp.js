@@ -6,6 +6,8 @@ import axios from "axios";
 import "./styles/PdfContainer.css";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+pdfjs.GlobalWorkerOptions.workerSrc = `https://pdfsigningbackend.onrender.com/pdf.worker.min.js`;
+
 // import { pdfjs } from "react-pdf";
 // import pdfWorker from "pdfjs-dist/build/pdf.worker.min.js";
 // pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
